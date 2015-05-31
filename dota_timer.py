@@ -31,6 +31,14 @@ HOTKEYS = map(str, range(1, 6))  # keys '1' to '5'
 SCEPTER_HOTKEYS = ['!', '@', '#', '$', '%']
 ROSHAN_TIMER_HK = '`'
 
+ALERT_MESSAGES = {
+    'ROSHAN': {
+        'MAYBE_ALIVE': 'Roshan might be alive.',
+        'ALIVE': 'Roshan is alive!'
+    },
+    'HERO': "Hero number {}'s ultimate ability is ready!"
+}
+
 NO_ULT = -1
 LEVEL_6 = 0
 LEVEL_11 = 1
@@ -52,7 +60,7 @@ def get_cooldown_time(name):
     Returns the appropriate ult cooldown based on the hero's level and if they have the Aghanim's Scepter.
 
     :param name: A hero's name
-    :return: A cooldown
+    :return: A cooldown time, in seconds
     """
     hero = heroes[name]
 
@@ -140,17 +148,21 @@ def run_hero_timer(name):
     time.sleep(cooldown_time)
 
     speaker = client.Dispatch("SAPI.SpVoice")
-    speaker.Speak("{}'s ultimate ability is ready!".format(name))
+    speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index']))
 
     print "{}'s ult is ready!".format(name)
 
 
 def run__roshan_timer():
     print "Starting Roshan timer..."
-    time.sleep(60 * 8)  # roshan takes 8 minutes to respawn
+    time.sleep(60 * 8)  # roshan takes at least 8 minutes to respawn
 
     speaker = client.Dispatch("SAPI.SpVoice")
-    speaker.Speak('Roshan is alive!')
+    speaker.Speak(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
+
+    time.sleep(60 * 8)  # roshan is definitely alive after 11 minutes
+
+    speaker.Speak(ALERT_MESSAGES['ROSHAN']['ALIVE'])
 
     print "Roshan is alive!"
 
