@@ -25,7 +25,6 @@ import json
 
 import test
 
-cooldowns_file = "cooldowns.json"
 
 HOTKEYS = map(str, range(1, 6))  # keys '1' to '5'
 SCEPTER_HOTKEYS = ['!', '@', '#', '$', '%']
@@ -43,6 +42,9 @@ NO_ULT = -1
 LEVEL_6 = 0
 LEVEL_11 = 1
 LEVEL_16 = 2
+
+HERO_DATA_FILE = "cooldowns.json"
+HERO_DATA = {}  # dictionary of Dota hero data, read in from HERO_DATA_FILE
 
 heroes = {}  # dictionary of enemy heroes in the game, addressed by hero name
 
@@ -80,16 +82,14 @@ def get_cooldown_time(name):
         return cooldowns[hero['state']]
 
 
-def get_all_hero_names(hero_info, hero_id):
+def get_all_hero_names(hero_id):
     """
-    Get all the names of a hero.
+    Get all the different names of a hero, including aliases.
 
-    :param hero_info: A dictionary of Dota heroes with their info
     :param hero_id: An id of a hero
-    :return: A list of all the different names of a hero
+    :return: A list of names
     """
-    print "try id: ", hero_id
-    info = hero_info.get(str(hero_id))
+    info = HERO_DATA.get(str(hero_id))
 
     names = [
         info.get('name').lower(),
@@ -104,20 +104,19 @@ def get_all_hero_names(hero_info, hero_id):
     return names
 
 
-def get_hero_id(hero_info, name):
+def get_hero_id(name):
     """
     Looks through each hero's names and alt names to find the right id.
 
-    :param hero_info: A dictionary of Dota heroes with their info
     :param name: A name of a hero. Can be an alias, short name or localised name
-    :return: The id of the hero, or -1 if not found.
+    :return: The id of the hero, or None if not found.
     """
     for hero_id in range(1, 106):
-        if str(hero_id) not in hero_info:
-            # print "Id {} not in hero_info. Moving on...".format(hero_id)
+        if str(hero_id) not in HERO_DATA:
+            # print "Id {} not in HERO_DATA. Moving on...".format(hero_id)
             continue
 
-        info = hero_info.get(str(hero_id))
+        info = HERO_DATA.get(str(hero_id))
 
         names = [
             info.get('name').lower(),
@@ -129,15 +128,10 @@ def get_hero_id(hero_info, name):
             for alias in info.get('aliases').split(','):
                 names.append(alias)
 
-        # print "Names: ", names
-        # print "searching for: ", name
-
         if name in names:
-            # print 'Returning {}...'.format(hero_id)
             return str(hero_id)
         elif hero_id == 105:
-            print "Could not find hero {}'s id! A name was probably entered wrong.".format(name)
-            sys.exit(1)
+            return None
 
 
 def run_hero_timer(name):
@@ -179,7 +173,7 @@ def read_hero_info(filename):
             return json.load(f)
     except IOError as e:
         print "Couldn't open the hero cooldowns file. Make sure it's called {} and in the same folder as the script."\
-            .format(cooldowns_file)
+            .format(HERO_DATA_FILE)
         print str(e)
         print "Exiting..."
         sys.exit(1)
@@ -190,32 +184,48 @@ def read_hero_info(filename):
         sys.exit(1)
 
 
-def read_hero_names():
+def read_hero_names_and_ids():
     """
     Prompt input for the names of each hero on the enemy's team.
-    :return: A list of the names of each enemy hero
+    After each name is read, it's id is retrieved and validated.
+    If the id wasn't found, the user is reprompted until it is found.
+
+    :return: A tuple containing lists of the names and ids of each enemy hero
     """
     names = []
+    ids = []
 
     for i in range(5):
-        name = raw_input("Enter name of enemy hero #{}: ".format(i + 1))
-        names.append(name.strip())
+        while True:
+            name = raw_input("Enter name of enemy hero #{}: ".format(i + 1))
+            name = name.strip()
 
-    return names
+            hero_id = get_hero_id(name)
+
+            if hero_id is None:
+                print "Invalid hero name. Please try again."
+            elif hero_id in ids:
+                print "Hero was already entered. Please try again."
+            else:
+                names.append(name)
+                ids.append(hero_id)
+                break
+
+    return names, ids
 
 
-def get_heroes(hero_info, hero_names):
+def get_heroes(hero_names, hero_ids):
     result = {}
 
     for i, name in enumerate(hero_names):
-        hero_id = str(get_hero_id(hero_info, name))
-        info = hero_info.get(hero_id)
+        hero_id = hero_ids[i]
+        info = HERO_DATA.get(hero_id)
 
         result[name] = {
             'index': i,
             'cooldowns': info.get('ultimate').get('cooldown'),
             'scepter_cooldowns': info.get('ultimate').get('scepter_cooldown'),
-            'names': get_all_hero_names(hero_info, hero_id),
+            'names': get_all_hero_names(hero_id),
             'has_scepter': False,
             'state': NO_ULT
         }
@@ -268,15 +278,13 @@ def listen():
 
 
 def main():
-    hero_info = read_hero_info(cooldowns_file)
-    print 'Successfully read hero info from {}'.format(cooldowns_file)
+    global HERO_DATA
+    HERO_DATA = read_hero_info(HERO_DATA_FILE)
 
-    # hero_names = read_hero_names()
-
-    hero_names = ['sven', 'br', 'dk', 'dirge', 'windrunner']
+    names_and_ids = read_hero_names_and_ids()
 
     global heroes
-    heroes = get_heroes(hero_info, hero_names)
+    heroes = get_heroes(names_and_ids[0], names_and_ids[1])
 
     listen()
 

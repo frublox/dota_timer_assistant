@@ -11,7 +11,7 @@ def run():
     dt.hero_ids = get_ids()
     print str(dt.hero_ids)
 
-    dt.hero_info = read_info()
+    dt.HERO_DATA = read_info()
     timers()
 
 
@@ -27,7 +27,7 @@ def get_ids():
 
 
 def get_names():
-    names = dt.read_hero_names()
+    names = dt.read_hero_names_and_ids()
 
     assert len(names) == 5
 
@@ -35,7 +35,7 @@ def get_names():
 
 
 def read_info():
-    info = dt.read_hero_info(dt.cooldowns_file)
+    info = dt.read_hero_info(dt.HERO_DATA_FILE)
 
     assert info.get('1') is not None
     assert info.get('105') is not None
