@@ -158,7 +158,7 @@ def run__roshan_timer():
     print "Roshan is alive!"
 
 
-def read_hero_info(filename):
+def read_hero_data(filename):
     """
     Read hero cooldowns from the specified JSON file.
 
@@ -276,7 +276,7 @@ def listen():
 
 def main():
     global HERO_DATA
-    HERO_DATA = read_hero_info(HERO_DATA_FILE)
+    HERO_DATA = read_hero_data(HERO_DATA_FILE)
 
     names_and_ids = read_hero_names_and_ids()
 
