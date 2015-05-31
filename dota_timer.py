@@ -66,20 +66,17 @@ def get_cooldown_time(name):
     """
     hero = heroes[name]
 
-    if hero['has_scepter'] and hero.get('scepter_cooldowns') is not None:
+    if hero['has_scepter'] and hero['scepter_cooldowns'] is not None:
         cooldowns = hero['scepter_cooldowns']
     else:
         cooldowns = hero['cooldowns']
 
-    if len(cooldowns) == 1:
-        return cooldowns[0]
-    elif len(cooldowns) == 2:
-        if hero['state'] == LEVEL_6:
-            return cooldowns[0]
-        else:
-            return cooldowns[1]
-    else:
-        return cooldowns[hero['state']]
+    try:
+        cooldown_time = cooldowns[hero['state']]
+    except IndexError:
+        cooldown_time = cooldowns[0]
+
+    return cooldown_time
 
 
 def get_all_hero_names(hero_id):
