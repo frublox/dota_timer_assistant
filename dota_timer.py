@@ -8,7 +8,7 @@ __author__ = 'Dan'
 # If a hero levels up to 11 or 16, press the number of the hero and ALT.
 # Example: if Sven just levelled up to 11, and he's the first player on the enemy team, press ALT+1
 
-# If Roshan dies, press the ` key.
+# If Roshan dies, press the 6 key.
 
 # If a hero gets Aghanim's sceptre, press the number of the hero and SHIFT.
 # Example: if Sven just got Aghanim's Scepter, and he's the first player on the enemy team, press SHIFT+1
@@ -29,7 +29,7 @@ cooldowns_file = "cooldowns.json"
 
 HOTKEYS = map(str, range(1, 6))  # keys '1' to '5'
 SCEPTER_HOTKEYS = ['!', '@', '#', '$', '%']
-ROSHAN_TIMER_HK = '`'
+ROSHAN_TIMER_HK = '6'
 
 ALERT_MESSAGES = {
     'ROSHAN': {
