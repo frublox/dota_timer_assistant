@@ -38,7 +38,6 @@ ALERT_MESSAGES = {
     'HERO': "Hero number {}'s ultimate ability is ready!"
 }
 
-NO_ULT = -1
 LEVEL_6 = 0
 LEVEL_11 = 1
 LEVEL_16 = 2
@@ -139,7 +138,7 @@ def run_hero_timer(name):
     time.sleep(cooldown_time)
 
     speaker = client.Dispatch("SAPI.SpVoice")
-    speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index']))
+    speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
 
     print "{}'s ult is ready!".format(name)
 
@@ -224,15 +223,13 @@ def get_heroes(hero_names, hero_ids):
             'scepter_cooldowns': info.get('ultimate').get('scepter_cooldown'),
             'names': get_all_hero_names(hero_id),
             'has_scepter': False,
-            'state': NO_ULT
+            'state': LEVEL_6
         }
 
     return result
 
 
 def on_key_down(event):
-    print 'Key: ', event.Key
-
     if event.Key == ROSHAN_TIMER_HK:
         thread = Thread(target=run__roshan_timer)
         threads.append(Thread)
@@ -242,29 +239,31 @@ def on_key_down(event):
 
         name = ''
 
-        for hero, info in heroes.iteritems():
-            if info['index'] == int(i):
+        for hero in heroes:
+            if heroes[hero]['index'] == i:
                 name = hero
-
-        print name
+                break
 
         if event.IsAlt():
             increment_hero_state(name)
-        elif heroes[name]['state'] != NO_ULT:
-            thread = Thread(target=run_hero_timer, args=name)
-            threads.append(Thread)
+        else:
+            thread = Thread(target=run_hero_timer(name), name='HERO_TIMER_{}'.format(i + 1))
+            # 1threads.append(Thread)
             thread.start()
     elif event.Key in SCEPTER_HOTKEYS:
         i = SCEPTER_HOTKEYS.index(event.Key)
 
         name = ''
 
-        for hero, info in heroes.iteritems():
-            if info['index'] == int(i):
+        for hero in heroes:
+            if heroes[hero]['index'] == i:
                 name = hero
+                break
 
         print "{} now has Aghanim's scepter!".format(name)
         heroes[name]['has_scepter'] = True
+
+    return True
 
 
 def listen():
@@ -287,5 +286,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # test.run()
-    main()
+    test.run()
+    # main()
