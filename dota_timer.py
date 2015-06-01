@@ -149,7 +149,7 @@ def run__roshan_timer():
 
     speaker.Speak(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
 
-    time.sleep(60 * 11)  # roshan is definitely alive after 11 minutes
+    time.sleep(60 * 3)  # roshan is definitely alive after 11 minutes
 
     speaker.Speak(ALERT_MESSAGES['ROSHAN']['ALIVE'])
 
