@@ -25,6 +25,7 @@ import json
 
 import test
 
+speaker = None
 
 HOTKEYS = map(str, range(1, 6))  # keys '1' to '5'
 SCEPTER_HOTKEYS = ['!', '@', '#', '$', '%']
@@ -137,7 +138,6 @@ def run_hero_timer(name):
 
     time.sleep(cooldown_time)
 
-    speaker = client.Dispatch("SAPI.SpVoice")
     speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
 
     print "{}'s ult is ready!".format(name)
@@ -147,10 +147,9 @@ def run__roshan_timer():
     print "Starting Roshan timer..."
     time.sleep(60 * 8)  # roshan takes at least 8 minutes to respawn
 
-    speaker = client.Dispatch("SAPI.SpVoice")
     speaker.Speak(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
 
-    time.sleep(60 * 8)  # roshan is definitely alive after 11 minutes
+    time.sleep(60 * 11)  # roshan is definitely alive after 11 minutes
 
     speaker.Speak(ALERT_MESSAGES['ROSHAN']['ALIVE'])
 
@@ -281,6 +280,9 @@ def main():
 
     global heroes
     heroes = get_heroes(names_and_ids[0], names_and_ids[1])
+
+    global speaker
+    speaker = client.Dispatch("SAPI.SpVoice")
 
     listen()
 
