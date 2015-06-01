@@ -254,7 +254,7 @@ def on_key_down(event):
             thread = Thread(target=run_hero_timer, args=name)
             threads.append(Thread)
             thread.start()
-    elif event.Ascii in SCEPTER_HOTKEYS:
+    elif event.Key in SCEPTER_HOTKEYS:
         i = SCEPTER_HOTKEYS.index(event.Key)
 
         name = ''
@@ -287,5 +287,5 @@ def main():
 
 
 if __name__ == '__main__':
-    test.run()
-    # main()
+    # test.run()
+    main()
