@@ -138,7 +138,7 @@ def run_hero_timer(name):
 
     time.sleep(cooldown_time)
 
-    speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
+    # speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
 
     print "{}'s ult is ready!".format(name)
 
@@ -228,6 +228,14 @@ def get_heroes(hero_names, hero_ids):
     return result
 
 
+def get_hero_name_by_index(i):
+    for hero in heroes:
+        if heroes[hero]['index'] == i:
+            name = hero
+            break
+    return name
+
+
 def on_key_down(event):
     if event.Key == ROSHAN_TIMER_HK:
         thread = Thread(target=run__roshan_timer)
@@ -236,12 +244,7 @@ def on_key_down(event):
     elif event.Key in HOTKEYS:
         i = HOTKEYS.index(event.Key)
 
-        name = ''
-
-        for hero in heroes:
-            if heroes[hero]['index'] == i:
-                name = hero
-                break
+        name = get_hero_name_by_index(i)
 
         if event.IsAlt():
             increment_hero_state(name)
@@ -252,12 +255,7 @@ def on_key_down(event):
     elif event.Key in SCEPTER_HOTKEYS:
         i = SCEPTER_HOTKEYS.index(event.Key)
 
-        name = ''
-
-        for hero in heroes:
-            if heroes[hero]['index'] == i:
-                name = hero
-                break
+        name = get_hero_name_by_index(i)
 
         print "{} now has Aghanim's scepter!".format(name)
         heroes[name]['has_scepter'] = True
@@ -269,7 +267,8 @@ def listen():
     hm = pyHook.HookManager()
     hm.KeyDown = on_key_down
     hm.HookKeyboard()
-    pythoncom.PumpMessages()
+    while True:
+        pythoncom.PumpMessages()
 
 
 def main():
