@@ -11,8 +11,6 @@ def run():
 
     dt.heroes = dt.get_heroes(hero_names, [dt.get_hero_id(name) for name in hero_names])
 
-    dt.heroes['sven']['state'] = dt.LEVEL_6
-
     for name in hero_names:
         cooldowns(name)
 
