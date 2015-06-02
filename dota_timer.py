@@ -25,8 +25,6 @@ import json
 
 import test
 
-speaker = None
-
 HOTKEYS = map(str, range(1, 6))  # keys '1' to '5'
 SCEPTER_HOTKEYS = ['!', '@', '#', '$', '%']
 ROSHAN_TIMER_HK = '6'
@@ -131,19 +129,19 @@ def get_hero_id(name):
             return None
 
 
-def run_hero_timer(name):
+def run_hero_timer(speaker, name):
     cooldown_time = get_cooldown_time(name)
 
     print "Starting ult timer for {}...\nCooldown time: {}".format(name, cooldown_time)
 
     time.sleep(cooldown_time)
 
-    # speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
+    speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
 
     print "{}'s ult is ready!".format(name)
 
 
-def run__roshan_timer():
+def run__roshan_timer(speaker):
     print "Starting Roshan timer..."
     time.sleep(60 * 8)  # roshan takes at least 8 minutes to respawn
 
@@ -231,14 +229,13 @@ def get_heroes(hero_names, hero_ids):
 def get_hero_name_by_index(i):
     for hero in heroes:
         if heroes[hero]['index'] == i:
-            name = hero
-            break
-    return name
+            return hero
 
 
 def on_key_down(event):
     if event.Key == ROSHAN_TIMER_HK:
-        thread = Thread(target=run__roshan_timer)
+        speaker = client.Dispatch("SAPI.SpVoice")
+        thread = Thread(target=run__roshan_timer(speaker))
         threads.append(Thread)
         thread.start()
     elif event.Key in HOTKEYS:
@@ -249,8 +246,8 @@ def on_key_down(event):
         if event.IsAlt():
             increment_hero_state(name)
         else:
-            thread = Thread(target=run_hero_timer(name), name='HERO_TIMER_{}'.format(i + 1))
-            # 1threads.append(Thread)
+            speaker = client.Dispatch("SAPI.SpVoice")
+            thread = Thread(target=run_hero_timer(speaker, name))
             thread.start()
     elif event.Key in SCEPTER_HOTKEYS:
         i = SCEPTER_HOTKEYS.index(event.Key)
@@ -267,6 +264,7 @@ def listen():
     hm = pyHook.HookManager()
     hm.KeyDown = on_key_down
     hm.HookKeyboard()
+
     while True:
         pythoncom.PumpMessages()
 
@@ -279,9 +277,6 @@ def main():
 
     global heroes
     heroes = get_heroes(names_and_ids[0], names_and_ids[1])
-
-    global speaker
-    speaker = client.Dispatch("SAPI.SpVoice")
 
     listen()
 
