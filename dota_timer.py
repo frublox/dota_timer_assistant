@@ -18,12 +18,16 @@ import pyHook
 import sys
 import time
 
-from threading import Thread
+from threading import Thread, current_thread
 from win32com import client
 
 import json
 
 import test
+
+from Queue import Queue
+
+speaker = client.Dispatch("SAPI.SpVoice")
 
 HOTKEYS = map(str, range(1, 6))  # keys '1' to '5'
 SCEPTER_HOTKEYS = ['!', '@', '#', '$', '%']
@@ -47,6 +51,8 @@ HERO_DATA = {}  # dictionary of Dota hero data, read in from HERO_DATA_FILE
 heroes = {}  # dictionary of enemy heroes in the game, addressed by hero name
 
 threads = []
+
+message_queue = Queue()
 
 
 def increment_hero_state(name):
@@ -129,27 +135,32 @@ def get_hero_id(name):
             return None
 
 
-def run_hero_timer(speaker, name):
+def run_hero_timer(name):
+    print "Current thread: ", current_thread().name
+
     cooldown_time = get_cooldown_time(name)
 
     print "Starting ult timer for {}...\nCooldown time: {}".format(name, cooldown_time)
 
     time.sleep(cooldown_time)
 
-    speaker.Speak(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
+    message_queue.put(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
 
     print "{}'s ult is ready!".format(name)
 
 
-def run__roshan_timer(speaker):
+def run_roshan_timer():
+    print "Current thread: ", current_thread().name
     print "Starting Roshan timer..."
+
     time.sleep(60 * 8)  # roshan takes at least 8 minutes to respawn
 
-    speaker.Speak(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
+    message_queue.put(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
 
     time.sleep(60 * 3)  # roshan is definitely alive after 11 minutes
 
-    speaker.Speak(ALERT_MESSAGES['ROSHAN']['ALIVE'])
+    message_queue.put(ALERT_MESSAGES['ROSHAN']['ALIVE'])
+    message_queue.task_done()
 
     print "Roshan is alive!"
 
@@ -234,8 +245,7 @@ def get_hero_name_by_index(i):
 
 def on_key_down(event):
     if event.Key == ROSHAN_TIMER_HK:
-        speaker = client.Dispatch("SAPI.SpVoice")
-        thread = Thread(target=run__roshan_timer(speaker))
+        thread = Thread(target=run_roshan_timer)
         threads.append(Thread)
         thread.start()
     elif event.Key in HOTKEYS:
@@ -246,8 +256,8 @@ def on_key_down(event):
         if event.IsAlt():
             increment_hero_state(name)
         else:
-            speaker = client.Dispatch("SAPI.SpVoice")
-            thread = Thread(target=run_hero_timer(speaker, name))
+            thread = Thread(target=run_hero_timer, kwargs={'name': name})
+            threads.append(thread)
             thread.start()
     elif event.Key in SCEPTER_HOTKEYS:
         i = SCEPTER_HOTKEYS.index(event.Key)
@@ -260,13 +270,25 @@ def on_key_down(event):
     return True
 
 
-def listen():
+def listen_for_keys():
     hm = pyHook.HookManager()
     hm.KeyDown = on_key_down
     hm.HookKeyboard()
+    pythoncom.PumpMessages()
 
+
+def listen_for_messages():
     while True:
-        pythoncom.PumpMessages()
+        if not message_queue.empty():
+            message = message_queue.get()
+            speaker.Speak(message)
+            message_queue.task_done()
+
+
+def listen():
+    thread = Thread(target=listen_for_keys)
+    thread.start()
+    listen_for_messages()
 
 
 def main():
