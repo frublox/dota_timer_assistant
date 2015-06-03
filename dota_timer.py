@@ -38,7 +38,7 @@ ALERT_MESSAGES = {
         'MAYBE_ALIVE': 'Roshan might be alive.',
         'ALIVE': 'Roshan is alive!'
     },
-    'HERO': "Hero number {}'s ultimate ability is ready!"
+    'HERO': "Hero number {} ultimate ability is ready!"
 }
 
 LEVEL_6 = 0
@@ -136,26 +136,25 @@ def get_hero_id(name):
 
 
 def run_hero_timer(name):
-    print "Current thread: ", current_thread().name
-
     cooldown_time = get_cooldown_time(name)
 
-    print "Starting ult timer for {}...\nCooldown time: {}".format(name, cooldown_time)
+    print "Starting {}'s (#{}) ult timer for {} seconds"\
+        .format(heroes[name]['localized_name'], heroes[name]['index'] + 1,  cooldown_time)
 
     time.sleep(cooldown_time)
 
     message_queue.put(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
 
-    print "{}'s ult is ready!".format(name)
+    print "{}'s ult is ready!".format(heroes[name]['localized_name'])
 
 
 def run_roshan_timer():
-    print "Current thread: ", current_thread().name
     print "Starting Roshan timer..."
 
     time.sleep(60 * 8)  # roshan takes at least 8 minutes to respawn
 
     message_queue.put(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
+    print "Roshan might be alive..."
 
     time.sleep(60 * 3)  # roshan is definitely alive after 11 minutes
 
@@ -224,6 +223,7 @@ def get_heroes(hero_names, hero_ids):
     for i, name in enumerate(hero_names):
         hero_id = hero_ids[i]
         info = HERO_DATA.get(hero_id)
+        localized_name = info.get('localized_name')
 
         result[name] = {
             'index': i,
@@ -231,7 +231,8 @@ def get_heroes(hero_names, hero_ids):
             'scepter_cooldowns': info.get('ultimate').get('scepter_cooldown'),
             'names': get_all_hero_names(hero_id),
             'has_scepter': False,
-            'state': LEVEL_6
+            'state': LEVEL_6,
+            'localized_name': localized_name
         }
 
     return result
