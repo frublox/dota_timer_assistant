@@ -50,7 +50,7 @@ HERO_DATA = {}  # dictionary of Dota hero data, read in from HERO_DATA_FILE
 
 heroes = {}  # dictionary of enemy heroes in the game, addressed by hero name
 
-threads = []
+timer_running = []
 
 message_queue = Queue()
 
@@ -145,6 +145,8 @@ def run_hero_timer(name):
     message_queue.put(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
     message_queue.task_done()
 
+    timer_running[heroes[name]['index']] = False
+
     print "{}'s ult is ready!".format(heroes[name]['localized_name'])
 
 
@@ -160,6 +162,8 @@ def run_roshan_timer():
 
     message_queue.put(ALERT_MESSAGES['ROSHAN']['ALIVE'])
     message_queue.task_done()
+
+    timer_running[5] = False
 
     print "Roshan is alive!"
 
@@ -246,11 +250,17 @@ def get_hero_name_by_index(i):
 
 def on_key_down(event):
     if event.Key == ROSHAN_TIMER_HK:
+        if timer_running[5]:
+            return True
+
         thread = Thread(target=run_roshan_timer)
-        threads.append(Thread)
         thread.start()
+        timer_running[5] = True
     elif event.Key in HOTKEYS:
         i = HOTKEYS.index(event.Key)
+
+        if timer_running[i]:
+            return True
 
         name = get_hero_name_by_index(i)
 
@@ -258,8 +268,8 @@ def on_key_down(event):
             increment_hero_state(name)
         else:
             thread = Thread(target=run_hero_timer, kwargs={'name': name})
-            threads.append(thread)
             thread.start()
+            timer_running[i] = True
     elif event.Key in SCEPTER_HOTKEYS:
         i = SCEPTER_HOTKEYS.index(event.Key)
 
@@ -279,11 +289,14 @@ def listen_for_keys():
 
 
 def listen_for_messages():
+    global timer_running
+    timer_running = map(lambda i: False, range(6))
+
     while True:
         if not message_queue.empty():
             message = message_queue.get()
             speaker.Speak(message)
-            message_queue.task_done()
+            time.sleep(1)
 
 
 def listen():
