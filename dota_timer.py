@@ -52,6 +52,8 @@ heroes = {}  # dictionary of enemy heroes in the game, addressed by hero name
 
 timer_running = []
 
+accept_hotkeys = True
+
 message_queue = Queue()
 
 
@@ -249,6 +251,13 @@ def get_hero_name_by_index(i):
 
 
 def on_key_down(event):
+    if event.Key == 'Return':
+        global accept_hotkeys
+        accept_hotkeys = not accept_hotkeys
+
+    if not accept_hotkeys:
+        return True
+
     if event.Key == ROSHAN_TIMER_HK:
         if timer_running[5]:
             return True
