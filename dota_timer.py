@@ -112,12 +112,11 @@ def get_hero_id(name):
     :param name: A name of a hero. Can be an alias, short name or localised name
     :return: The id of the hero, or None if not found.
     """
-    for hero_id in range(1, 106):
-        if str(hero_id) not in HERO_DATA:
-            # print "Id {} not in HERO_DATA. Moving on...".format(hero_id)
+    for hero_id in map(str, range(1, 106)):
+        if hero_id not in HERO_DATA:
             continue
 
-        info = HERO_DATA.get(str(hero_id))
+        info = HERO_DATA.get(hero_id)
 
         names = [
             info.get('name').lower(),
@@ -130,8 +129,8 @@ def get_hero_id(name):
                 names.append(alias)
 
         if name in names:
-            return str(hero_id)
-        elif hero_id == 105:
+            return hero_id
+        elif hero_id == '105':
             return None
 
 
