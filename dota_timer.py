@@ -143,6 +143,7 @@ def run_hero_timer(name):
     time.sleep(cooldown_time)
 
     message_queue.put(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
+    message_queue.task_done()
 
     print "{}'s ult is ready!".format(heroes[name]['localized_name'])
 
