@@ -17,21 +17,21 @@ import pythoncom
 import pyHook
 import sys
 import time
-
+import json
 from threading import Thread, current_thread
 from win32com import client
-
-import json
+from Queue import Queue
+import ConfigParser
+import logging
 
 import test
 
-from Queue import Queue
+logging.basicConfig(filename='log.log', level=logging.INFO)
 
 speaker = client.Dispatch("SAPI.SpVoice")
 
-HOTKEYS = map(str, range(1, 6))  # keys '1' to '5'
-SCEPTER_HOTKEYS = ['!', '@', '#', '$', '%']
-ROSHAN_TIMER_HK = '6'
+HOTKEYS_FILE = 'hotkeys.ini'
+HOTKEYS = {}
 
 ALERT_MESSAGES = {
     'ROSHAN': {
@@ -60,7 +60,7 @@ message_queue = Queue()
 def increment_hero_state(name):
     if heroes[name]['state'] != LEVEL_16:
         heroes[name]['state'] += 1
-        print "Incremented hero {}'s level.".format(name)
+        print "Hero #{} ({}): Incremented level".format(heroes[name]['index'] + 1, heroes[name]['localized_name'])
 
 
 def get_cooldown_time(name):
@@ -137,10 +137,12 @@ def get_hero_id(name):
 
 
 def run_hero_timer(name):
+    logging.debug('Current thread: {}'.format(current_thread().name))
+
     cooldown_time = get_cooldown_time(name)
 
-    print "Starting {}'s (#{}) ult timer for {} seconds"\
-        .format(heroes[name]['localized_name'], heroes[name]['index'] + 1,  cooldown_time)
+    print "Hero #{} ({}): Starting ult timer for {} seconds".format(
+        heroes[name]['index'] + 1, heroes[name]['localized_name'],  cooldown_time)
 
     time.sleep(cooldown_time)
 
@@ -149,10 +151,11 @@ def run_hero_timer(name):
 
     timer_running[heroes[name]['index']] = False
 
-    print "{}'s ult is ready!".format(heroes[name]['localized_name'])
+    print "Hero #{} ({}): Ult is ready!".format(heroes[name]['index'] + 1, heroes[name]['localized_name'])
 
 
 def run_roshan_timer():
+    logging.debug('Current thread: {}'.format(current_thread().name))
     print "Starting Roshan timer..."
 
     time.sleep(60 * 8)  # roshan takes at least 8 minutes to respawn
@@ -170,6 +173,29 @@ def run_roshan_timer():
     print "Roshan is alive!"
 
 
+def read_hotkeys(filename):
+    """
+    Reads hotkey info from a config file and returns it as a dictionary
+    :param filename: Configuration file with hotkey settings
+    :return: A dictionary of hotkey settings
+    """
+    hotkeys_dict = {}
+
+    try:
+        config = ConfigParser.ConfigParser()
+        config.read(filename)
+
+        hotkeys_dict['HEROES'] = config.get('hotkeys', 'start_enemy_timer').split(', ')
+        hotkeys_dict['SCEPTER'] = config.get('hotkeys', 'enemy_got_scepter').split(', ')
+        hotkeys_dict['ROSHAN'] = config.get('hotkeys', 'roshan')
+
+        return hotkeys_dict
+    except ConfigParser.Error:
+        logging.exception("Failed to read and parse hotkeys configuration at {}".format(filename))
+
+    sys.exit(1)
+
+
 def read_hero_data(filename):
     """
     Read hero cooldowns from the specified JSON file.
@@ -180,17 +206,14 @@ def read_hero_data(filename):
     try:
         with open(filename) as f:
             return json.load(f)
-    except IOError as e:
-        print "Couldn't open the hero cooldowns file. Make sure it's called {} and in the same folder as the script."\
-            .format(HERO_DATA_FILE)
-        print str(e)
-        print "Exiting..."
-        sys.exit(1)
-    except ValueError as e:
-        print "Couldn't parse the hero cooldowns file. Make sure it's valid JSON."
-        print str(e)
-        print "Exiting..."
-        sys.exit(1)
+    except IOError:
+        logging.exception(
+            "Couldn't open the hero cooldowns file. Make sure it's called {} and in the same folder as the script."
+            .format(HERO_DATA_FILE))
+    except ValueError:
+        logging.exception("Couldn't parse the hero cooldowns file. Make sure it's valid JSON.")
+
+    sys.exit(1)
 
 
 def read_hero_names_and_ids():
@@ -258,15 +281,15 @@ def on_key_down(event):
     if not accept_hotkeys:
         return True
 
-    if event.Key == ROSHAN_TIMER_HK:
+    if event.Key == HOTKEYS['ROSHAN']:
         if timer_running[5]:
             return True
 
-        thread = Thread(target=run_roshan_timer)
+        thread = Thread(target=run_roshan_timer, name='Roshan Timer')
         thread.start()
         timer_running[5] = True
-    elif event.Key in HOTKEYS:
-        i = HOTKEYS.index(event.Key)
+    elif event.Key in HOTKEYS['HEROES']:
+        i = HOTKEYS['HEROES'].index(event.Key)
 
         if timer_running[i]:
             return True
@@ -276,16 +299,16 @@ def on_key_down(event):
         if event.IsAlt():
             increment_hero_state(name)
         else:
-            thread = Thread(target=run_hero_timer, kwargs={'name': name})
+            thread = Thread(target=run_hero_timer, kwargs={'name': name}, name="Hero_Timer_{}".format(i + 1))
             thread.start()
             timer_running[i] = True
-    elif event.Key in SCEPTER_HOTKEYS:
-        i = SCEPTER_HOTKEYS.index(event.Key)
+    elif event.Key in HOTKEYS['SCEPTER']:
+        i = HOTKEYS['SCEPTER'].index(event.Key)
 
         name = get_hero_name_by_index(i)
 
-        print "{} now has Aghanim's scepter!".format(name)
         heroes[name]['has_scepter'] = True
+        logging.info("{} now has Aghanim's scepter!".format(name))
 
     return True
 
@@ -317,6 +340,11 @@ def listen():
 def main():
     global HERO_DATA
     HERO_DATA = read_hero_data(HERO_DATA_FILE)
+    logging.info("Successfully read HERO_DATA file.")
+
+    global HOTKEYS
+    HOTKEYS = read_hotkeys(HOTKEYS_FILE)
+    logging.info("Successfully read HOTKEYS file.")
 
     names_and_ids = read_hero_names_and_ids()
 
@@ -327,5 +355,5 @@ def main():
 
 
 if __name__ == '__main__':
-    test.run()
-    # main()
+    # test.run()
+    main()
