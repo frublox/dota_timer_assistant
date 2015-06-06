@@ -12,7 +12,7 @@ def run():
     dt.heroes = dt.get_heroes(hero_names, [dt.get_hero_id(name) for name in hero_names])
 
     for name in hero_names:
-        dt.heroes[name]['cooldowns'] = [100]
+        dt.heroes[name]['cooldowns'] = [10]
 
     dt.HOTKEYS = dt.read_hotkeys(dt.HOTKEYS_FILE)
     dt.listen()

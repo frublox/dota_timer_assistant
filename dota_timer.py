@@ -27,7 +27,7 @@ import curses
 
 import test
 
-logging.basicConfig(filename='log.log', level=logging.INFO)
+logging.basicConfig(filename='log.log', level=logging.DEBUG)
 
 speaker = client.Dispatch("SAPI.SpVoice")
 
@@ -51,7 +51,7 @@ HERO_DATA = {}  # dictionary of Dota hero data, read in from HERO_DATA_FILE
 
 heroes = {}  # dictionary of enemy heroes in the game, addressed by hero name
 
-timer_running = []
+timer_running = map(lambda i: False, range(6))
 timer_time_left = map(lambda i: 0, range(6))
 
 accept_hotkeys = True
@@ -348,16 +348,6 @@ def listen_for_keys():
     pythoncom.PumpMessages()
 
 
-def listen_for_voice_msg():
-    global timer_running
-    timer_running = map(lambda i: False, range(6))
-
-    while True:
-        if not voice_msg_queue.empty():
-            msg = voice_msg_queue.get()
-            speaker.Speak(msg)
-
-
 def update_screen():
     labels = ""
     for i in range(5):
@@ -391,6 +381,13 @@ def update_screen():
         time.sleep(1)
 
 
+def listen_for_voice_msgs():
+    while True:
+        if not voice_msg_queue.empty():
+            msg = voice_msg_queue.get()
+            speaker.Speak(msg)
+
+
 def listen():
     key_listener = Thread(target=listen_for_keys, name="Key Listener")
     key_listener.start()
@@ -398,10 +395,10 @@ def listen():
     timer_watcher = Thread(target=watch_timers, name="Timer Watcher")
     timer_watcher.start()
 
-    voice_msg_listener = Thread(target=listen_for_voice_msg, name="Voice Msg Watcher")
-    voice_msg_listener.start()
+    screen_updater = Thread(target=update_screen, name="Screen Updater")
+    screen_updater.start()
 
-    update_screen()
+    listen_for_voice_msgs()  # voice messages have to run on the main thread
 
 
 def main():
