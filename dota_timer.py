@@ -23,6 +23,7 @@ from win32com import client
 from Queue import Queue
 import ConfigParser
 import logging
+import curses
 
 import test
 
@@ -51,10 +52,13 @@ HERO_DATA = {}  # dictionary of Dota hero data, read in from HERO_DATA_FILE
 heroes = {}  # dictionary of enemy heroes in the game, addressed by hero name
 
 timer_running = []
+timer_time_left = map(lambda i: 0, range(6))
 
 accept_hotkeys = True
 
-message_queue = Queue()
+voice_msg_queue = Queue()
+timer_info_queue = Queue()
+notification_queue = Queue()
 
 
 def increment_hero_state(name):
@@ -139,38 +143,51 @@ def get_hero_id(name):
 def run_hero_timer(name):
     logging.debug('Current thread: {}'.format(current_thread().name))
 
+    hero_index = heroes[name]['index']
+    localized_name = heroes[name]['localized_name']
+
     cooldown_time = get_cooldown_time(name)
 
-    print "Hero #{} ({}): Starting ult timer for {} seconds".format(
-        heroes[name]['index'] + 1, heroes[name]['localized_name'],  cooldown_time)
+    notification_queue.put("Hero #{} ({}): Starting ult timer for {} seconds".format(
+        hero_index + 1, localized_name,  cooldown_time))
 
-    time.sleep(cooldown_time)
+    timer_time_left[heroes[name]['index']] = cooldown_time
+    for i in range(cooldown_time):
+        time.sleep(1)
+        timer_time_left[hero_index] -= 1
 
-    message_queue.put(ALERT_MESSAGES['HERO'].format(heroes[name]['index'] + 1))
-    message_queue.task_done()
+    voice_msg_queue.put(ALERT_MESSAGES['HERO'].format(hero_index + 1))
+    voice_msg_queue.task_done()
 
     timer_running[heroes[name]['index']] = False
 
-    print "Hero #{} ({}): Ult is ready!".format(heroes[name]['index'] + 1, heroes[name]['localized_name'])
+    notification_queue.put("Hero #{} ({}): Ult is ready!".format(hero_index + 1, localized_name))
 
 
 def run_roshan_timer():
     logging.debug('Current thread: {}'.format(current_thread().name))
-    print "Starting Roshan timer..."
 
-    time.sleep(60 * 8)  # roshan takes at least 8 minutes to respawn
+    notification_queue.put("Starting Roshan timer...")
 
-    message_queue.put(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
-    print "Roshan might be alive..."
+    timer_time_left[5] = 60 * 11
 
-    time.sleep(60 * 3)  # roshan is definitely alive after 11 minutes
+    for i in range(60 * 8):
+        time.sleep(1)
+        timer_time_left[5] -= 1
 
-    message_queue.put(ALERT_MESSAGES['ROSHAN']['ALIVE'])
-    message_queue.task_done()
+    voice_msg_queue.put(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
+    notification_queue.put("Roshan might be alive...")
+
+    for i in range(60 * 11):
+        time.sleep(1)
+        timer_time_left[5] -= 1
+
+    voice_msg_queue.put(ALERT_MESSAGES['ROSHAN']['ALIVE'])
+    voice_msg_queue.task_done()
 
     timer_running[5] = False
 
-    print "Roshan is alive!"
+    notification_queue.put("Roshan is alive!")
 
 
 def read_hotkeys(filename):
@@ -179,17 +196,17 @@ def read_hotkeys(filename):
     :param filename: Configuration file with hotkey settings
     :return: A dictionary of hotkey settings
     """
-    hotkeys_dict = {}
+    hotkeys = {}
 
     try:
         config = ConfigParser.ConfigParser()
         config.read(filename)
 
-        hotkeys_dict['HEROES'] = config.get('hotkeys', 'start_enemy_timer').split(', ')
-        hotkeys_dict['SCEPTER'] = config.get('hotkeys', 'enemy_got_scepter').split(', ')
-        hotkeys_dict['ROSHAN'] = config.get('hotkeys', 'roshan')
+        hotkeys['HEROES'] = config.get('hotkeys', 'start_enemy_timer').split(', ')
+        hotkeys['SCEPTER'] = config.get('hotkeys', 'enemy_got_scepter').split(', ')
+        hotkeys['ROSHAN'] = config.get('hotkeys', 'roshan')
 
-        return hotkeys_dict
+        return hotkeys
     except ConfigParser.Error:
         logging.exception("Failed to read and parse hotkeys configuration at {}".format(filename))
 
@@ -299,7 +316,7 @@ def on_key_down(event):
         if event.IsAlt():
             increment_hero_state(name)
         else:
-            thread = Thread(target=run_hero_timer, kwargs={'name': name}, name="Hero_Timer_{}".format(i + 1))
+            thread = Thread(target=run_hero_timer, kwargs={'name': name}, name="Hero Timer {}".format(i + 1))
             thread.start()
             timer_running[i] = True
     elif event.Key in HOTKEYS['SCEPTER']:
@@ -313,6 +330,17 @@ def on_key_down(event):
     return True
 
 
+def watch_timers():
+    timers_string = ""
+    for i in range(6):
+        timers_string += "{:10}"
+
+    while True:
+        timer_info_queue.put(timers_string.format(*timer_time_left))
+
+        time.sleep(1)
+
+
 def listen_for_keys():
     hm = pyHook.HookManager()
     hm.KeyDown = on_key_down
@@ -320,21 +348,60 @@ def listen_for_keys():
     pythoncom.PumpMessages()
 
 
-def listen_for_messages():
+def listen_for_voice_msg():
     global timer_running
     timer_running = map(lambda i: False, range(6))
 
     while True:
-        if not message_queue.empty():
-            message = message_queue.get()
-            speaker.Speak(message)
-            time.sleep(1)
+        if not voice_msg_queue.empty():
+            msg = voice_msg_queue.get()
+            speaker.Speak(msg)
+
+
+def update_screen():
+    labels = ""
+    for i in range(5):
+        title = "Hero #{}".format(i + 1)
+        labels += "{:>10}".format(title)
+
+    labels += "{:>10}".format("Roshan")
+
+    timer_info = ""
+    notification = ""
+
+    window = curses.initscr()
+
+    while True:
+        if not timer_info_queue.empty():
+            timer_info = timer_info_queue.get()
+
+        if not notification_queue.empty():
+            notification = notification_queue.get()
+
+        window.clear()
+
+        window.addstr(labels)
+        window.addstr("\n")
+        window.addstr(timer_info)
+        window.addstr("\n\n")
+        window.addstr(notification)
+
+        window.refresh()
+
+        time.sleep(1)
 
 
 def listen():
-    thread = Thread(target=listen_for_keys)
-    thread.start()
-    listen_for_messages()
+    key_listener = Thread(target=listen_for_keys, name="Key Listener")
+    key_listener.start()
+
+    timer_watcher = Thread(target=watch_timers, name="Timer Watcher")
+    timer_watcher.start()
+
+    voice_msg_listener = Thread(target=listen_for_voice_msg, name="Voice Msg Watcher")
+    voice_msg_listener.start()
+
+    update_screen()
 
 
 def main():
@@ -355,5 +422,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # test.run()
-    main()
+    test.run()
+    # main()
