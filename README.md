@@ -2,4 +2,6 @@
 
 Windows and Python 2.7 required.
 
-Needs the curses module to run. To install curses, just run install_curses.bat.
+Needs pyHook, pywin32, and curses.
+
+To install curses, just run install_curses.bat.
