@@ -1,7 +1,4 @@
 # dota_timer_assistant
-Work in progress.
-
-Documentation coming one day...
 
 Windows and Python 2.7 required.
 
