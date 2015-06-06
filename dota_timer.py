@@ -271,10 +271,17 @@ def get_heroes(hero_names, hero_ids):
         info = HERO_DATA.get(hero_id)
         localized_name = info.get('localized_name')
 
+        if info.get('ultimate') is not None:
+            cooldowns = info.get('ultimate').get('cooldown')
+            scepter_cooldowns = info.get('ultimate').get('scepter_cooldown')
+        else:
+            cooldowns = [0]
+            scepter_cooldowns = None
+
         result[name] = {
             'index': i,
-            'cooldowns': info.get('ultimate').get('cooldown'),
-            'scepter_cooldowns': info.get('ultimate').get('scepter_cooldown'),
+            'cooldowns': cooldowns,
+            'scepter_cooldowns': scepter_cooldowns,
             'names': get_all_hero_names(hero_id),
             'has_scepter': False,
             'state': LEVEL_6,
@@ -419,5 +426,5 @@ def main():
 
 
 if __name__ == '__main__':
-    test.run()
-    # main()
+    # test.run()
+    main()
