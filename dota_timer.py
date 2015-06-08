@@ -165,7 +165,7 @@ def run_roshan_timer():
     voice_msg_queue.put(ALERT_MESSAGES['ROSHAN']['MAYBE_ALIVE'])
     notification_queue.put("Roshan might be alive...")
 
-    for i in range(60 * 11):
+    for i in range(60 * 3):
         time.sleep(1)
         timer_time_left[5] -= 1
 
@@ -381,7 +381,7 @@ def listen_for_voice_msgs():
             msg = voice_msg_queue.get()
             speaker.Speak(msg)
         else:
-            time.sleep(0.1)
+            time.sleep(1)
 
 
 def listen():
