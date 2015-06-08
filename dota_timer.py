@@ -1,18 +1,5 @@
 __author__ = 'Dan'
 
-# INSTRUCTIONS
-
-# After a hero uses their ult, press the number of the hero on the keyboard.
-# Example: if Sven just used his ult and he's the first player on the enemy team, press 1
-
-# If a hero levels up to 11 or 16, press the number of the hero and ALT.
-# Example: if Sven just levelled up to 11, and he's the first player on the enemy team, press ALT+1
-
-# If Roshan dies, press the 6 key.
-
-# If a hero gets Aghanim's sceptre, press the number of the hero and SHIFT.
-# Example: if Sven just got Aghanim's Scepter, and he's the first player on the enemy team, press SHIFT+1
-
 import pythoncom
 import pyHook
 import sys
