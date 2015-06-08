@@ -380,6 +380,8 @@ def listen_for_voice_msgs():
         if not voice_msg_queue.empty():
             msg = voice_msg_queue.get()
             speaker.Speak(msg)
+        else:
+            time.sleep(0.1)
 
 
 def listen():
