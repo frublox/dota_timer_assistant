@@ -15,7 +15,13 @@ An audio/visual aid that helps keep track of your enemies' ult cooldowns and Ros
 * [pywin32](http://sourceforge.net/projects/pywin32/)
 * curses
 
-To install curses, just run install_curses.bat and enter the correct choice for your Python installation. If one choice doesn't work, then try the other.
+To install curses, just run install_curses batch file for your Python installation. If one doesn't work, then try the other.
+
+If those don't work, try installing it yourself from the command line using the command:
+
+    pip install [the .whl file for your Python installation]
+  
+Double check to make sure your pip is for Python 2, not 3.
 
 ## Setup
 
