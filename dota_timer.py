@@ -1,5 +1,3 @@
-__author__ = 'Dan'
-
 import pythoncom
 import pyHook
 import sys
