@@ -45,6 +45,8 @@ voice_msg_queue = Queue()
 timer_info_queue = Queue()
 notification_queue = Queue()
 
+last_key_pressed = ''
+
 
 def increment_hero_state(name):
     if heroes[name]['state'] != LEVEL_16:
@@ -189,7 +191,6 @@ def read_hotkeys(filename):
         config.read(filename)
 
         hotkeys['HEROES'] = config.get('hotkeys', 'start_enemy_timer').split(', ')
-        hotkeys['SCEPTER'] = config.get('hotkeys', 'enemy_got_scepter').split(', ')
         hotkeys['ROSHAN'] = config.get('hotkeys', 'roshan')
 
         return hotkeys
@@ -284,6 +285,9 @@ def get_hero_name_by_index(i):
 
 
 def on_key_down(event):
+    global last_key_pressed
+    last_key_pressed = event.Key
+
     if event.Key == 'Return':
         global accept_hotkeys
         accept_hotkeys = not accept_hotkeys
@@ -308,17 +312,18 @@ def on_key_down(event):
 
         if event.IsAlt():
             increment_hero_state(name)
+        elif last_key_pressed == 'Lshift':
+            heroes[name]['has_scepter'] = not heroes[name]['has_scepter']
+
+            localized_name = heroes[name]['localized_name']
+            has_scepter = heroes[name]['has_scepter']
+
+            notification_queue.put("{} has Aghanim's Scepter: {}".format(
+                localized_name, has_scepter))
         else:
             thread = Thread(target=run_hero_timer, kwargs={'name': name}, name="Hero Timer {}".format(i + 1))
             thread.start()
             timer_running[i] = True
-    elif event.Key in HOTKEYS['SCEPTER']:
-        i = HOTKEYS['SCEPTER'].index(event.Key)
-
-        name = get_hero_name_by_index(i)
-
-        heroes[name]['has_scepter'] = True
-        logging.info("{} now has Aghanim's scepter!".format(name))
 
     return True
 
@@ -414,5 +419,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # test.run()
-    main()
+    test.run()
+    # main()
