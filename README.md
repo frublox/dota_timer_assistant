@@ -45,4 +45,4 @@ To increment the level, press Alt and the hotkey for hero whose level you want t
 
 ### Setting if a hero has gotten Aghanim's scepter
 
-*Not yet working!*
+Press Shift and the hotkey for the hero you want to set. To unset it, just press those keys again.
