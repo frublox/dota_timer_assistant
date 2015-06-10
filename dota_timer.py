@@ -49,7 +49,8 @@ notification_queue = Queue()
 def increment_hero_state(name):
     if heroes[name]['state'] != LEVEL_16:
         heroes[name]['state'] += 1
-        print "Hero #{} ({}): Incremented level".format(heroes[name]['index'] + 1, heroes[name]['localized_name'])
+        notification_queue.put(
+            "Hero #{} ({}): Incremented level".format(heroes[name]['index'] + 1, heroes[name]['localized_name']))
 
 
 def get_cooldown_time(name):
