@@ -4,8 +4,7 @@ An audio/visual aid that helps keep track of your enemies' ult cooldowns and Ros
 
 ## To-do list (in order of highest priority)
 
-+ Fix scepter hotkeys not working, or implement a smoother system for them
-+ Add a GUI overlay that can show up over the actual Dota game screen
++ Make the GUI overlay prettier and more useful
 
 ## Requirements
 
