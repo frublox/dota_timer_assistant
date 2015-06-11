@@ -49,8 +49,6 @@ notification_queue = Queue()
 
 last_key_pressed = ''
 
-root = Tk.Tk()
-
 
 def increment_hero_state(name):
     if heroes[name]['state'] != LEVEL_16:
@@ -393,6 +391,9 @@ def listen_for_voice_msgs():
 
 
 def run_overlay():
+    global root
+    root = Tk.Tk()
+
     root.wm_attributes('-topmost', 1)
     app = gui.Overlay(master=root)
 
