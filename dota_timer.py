@@ -9,8 +9,10 @@ from Queue import Queue
 import ConfigParser
 import logging
 import curses
+import Tkinter as Tk
 
 import test
+import gui
 
 logging.basicConfig(filename='log.log', level=logging.DEBUG)
 
@@ -46,6 +48,8 @@ timer_info_queue = Queue()
 notification_queue = Queue()
 
 last_key_pressed = ''
+
+root = Tk.Tk()
 
 
 def increment_hero_state(name):
@@ -250,7 +254,7 @@ def read_hero_names_and_ids():
     return names, ids
 
 
-def get_heroes(hero_names, hero_ids):
+def create_heroes(hero_names, hero_ids):
     result = {}
 
     for i, name in enumerate(hero_names):
@@ -388,7 +392,17 @@ def listen_for_voice_msgs():
             time.sleep(1)
 
 
-def listen():
+def run_overlay():
+    root.wm_attributes('-topmost', 1)
+    app = gui.Overlay(master=root)
+
+    app.after(100, app.update_timer)
+
+    app.mainloop()
+    root.destroy()
+
+
+def run():
     key_listener = Thread(target=listen_for_keys, name="Key Listener")
     key_listener.start()
 
@@ -398,10 +412,13 @@ def listen():
     screen_updater = Thread(target=update_screen, name="Screen Updater")
     screen_updater.start()
 
+    overlay_runner = Thread(target=run_overlay, name="Overlay Runner")
+    overlay_runner.start()
+
     listen_for_voice_msgs()  # voice messages have to run on the main thread
 
 
-def main():
+def load_configs():
     global HERO_DATA
     HERO_DATA = read_hero_data(HERO_DATA_FILE)
     logging.info("Successfully read HERO_DATA file.")
@@ -410,14 +427,19 @@ def main():
     HOTKEYS = read_hotkeys(HOTKEYS_FILE)
     logging.info("Successfully read HOTKEYS file.")
 
-    names_and_ids = read_hero_names_and_ids()
 
+def set_heroes(names, ids):
     global heroes
-    heroes = get_heroes(names_and_ids[0], names_and_ids[1])
+    heroes = create_heroes(names, ids)
 
-    listen()
+
+def main():
+    load_configs()
+    set_heroes(*read_hero_names_and_ids())
+    run()
 
 
 if __name__ == '__main__':
     test.run()
     # main()
+
