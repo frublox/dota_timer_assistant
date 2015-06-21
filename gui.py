@@ -22,15 +22,18 @@ class Overlay(Tk.Frame):
 
         Tk.Frame.__init__(self, master=self.root)
 
-        self.timer_frame = Tk.Frame(self.root,  width=360, height=60)
-        self.timer_frame.pack_propagate(False)
-        self.timer_frame.pack(side=Tk.TOP)
+        self.left_side = Tk.Frame(self.root,  width=360, height=40)
+        self.left_side.pack_propagate(False)
+        self.left_side.pack(side=Tk.LEFT)
+        
+        self.timers_time = Tk.Frame(self.left_side,  width=360)
+        self.timers_time.pack(side=Tk.BOTTOM)
 
         self.timers = []
         self.init_timers()
 
-        self.options_frame = Tk.Frame(self.root, width=300, height=10, padx=10, pady=10)
-        self.options_frame.pack(side=Tk.BOTTOM)
+        self.right_side = Tk.Frame(self.root, height=40, padx=8)
+        self.right_side.pack(side=Tk.RIGHT)
 
         button_options = dict(
             text="Toggle Borders",
@@ -38,16 +41,16 @@ class Overlay(Tk.Frame):
             padx=5
         )
 
-        self.toggle_borders = Tk.Button(self.options_frame, **button_options)
+        self.toggle_borders = Tk.Button(self.right_side, **button_options)
         self.toggle_borders.pack()
 
-        self.notification_frame = Tk.Frame(self.root, width=300, height=10)
-        self.notification_frame.pack(side=Tk.BOTTOM)
+        self.notification_frame = Tk.Frame(self.left_side, height=8)
+        self.notification_frame.pack(side=Tk.TOP)
 
         self.notification = Tk.Label(self.notification_frame, text="")
         self.notification.pack()
 
     def init_timers(self):
         for i in range(6):
-            self.timers.append(Tk.Label(self.timer_frame, text=''))
-            self.timers[i].pack(side=Tk.LEFT, expand=True)
+            self.timers.append(Tk.Label(self.timers_time, text='', width=8))
+            self.timers[i].pack(side=Tk.LEFT)
