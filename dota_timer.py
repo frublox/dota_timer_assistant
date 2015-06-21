@@ -393,6 +393,11 @@ def listen_for_voice_msgs():
 def run_overlay():
     global root
     root = Tk.Tk()
+    root.overrideredirect(1)
+    root.attributes('-alpha', 0.7)
+    screen_width = root.winfo_screenwidth()
+    top_center = screen_width/2
+    root.geometry('360x40+'+str(top_center+90)+'+0')
 
     root.wm_attributes('-topmost', 1)
     app = gui.Overlay(master=root)
