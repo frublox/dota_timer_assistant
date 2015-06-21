@@ -4,7 +4,8 @@ An audio/visual aid that helps keep track of your enemies' ult cooldowns and Ros
 
 ## To-do list (in order of highest priority)
 
-+ Make the GUI overlay prettier and more useful
++ Add options for setting Aghanim's scepter and incrementing hero levels as buttons on the gui
++ Add a setup gui that is used to input hero data
 
 ## Requirements
 
