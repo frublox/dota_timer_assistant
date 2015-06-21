@@ -393,7 +393,7 @@ def listen_for_voice_msgs():
 def run_overlay():
     app = gui.Overlay()
 
-    app.after(100, app.update_timer)
+    app.after(100, app.update_info)
 
     app.mainloop()
     app.root.destroy()
