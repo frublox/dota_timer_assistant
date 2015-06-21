@@ -5,15 +5,6 @@ import Tkinter as Tk
 import dota_timer
 
 class Overlay(Tk.Frame):
-    def update_info(self):
-        for i, time in enumerate(dota_timer.timer_time_left):
-            self.timers[i]['text'] = time
-
-        if not dota_timer.notification_queue.empty():
-            self.notification['text'] = dota_timer.notification_queue.get()
-
-        self.root.after(100, self.update_info)
-
     def __init__(self):
         self.root = Tk.Tk()
 
@@ -26,7 +17,7 @@ class Overlay(Tk.Frame):
         self.left_side.pack_propagate(False)
         self.left_side.pack(side=Tk.LEFT)
         
-        self.timers_time = Tk.Frame(self.left_side,  width=360)
+        self.timers_time = Tk.Frame(self.left_side, width=360)
         self.timers_time.pack(side=Tk.BOTTOM)
 
         self.timers = []
@@ -49,6 +40,15 @@ class Overlay(Tk.Frame):
 
         self.notification = Tk.Label(self.notification_frame, text="")
         self.notification.pack()
+
+    def update_info(self):
+        for i, time in enumerate(dota_timer.timer_time_left):
+            self.timers[i]['text'] = time
+
+        if not dota_timer.notification_queue.empty():
+            self.notification['text'] = dota_timer.notification_queue.get()
+
+        self.root.after(100, self.update_info)
 
     def init_timers(self):
         for i in range(6):

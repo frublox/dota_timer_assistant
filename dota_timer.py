@@ -9,7 +9,6 @@ from Queue import Queue
 import ConfigParser
 import logging
 import curses
-import Tkinter as Tk
 
 import test
 import gui
