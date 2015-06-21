@@ -391,7 +391,6 @@ def listen_for_voice_msgs():
 
 
 def run_overlay():
-    global root
     root = Tk.Tk()
     root.overrideredirect(1)
     root.attributes('-alpha', 0.7)

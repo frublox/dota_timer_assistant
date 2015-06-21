@@ -7,10 +7,9 @@ import dota_timer
 class Overlay(Tk.Frame):
     def update_timer(self):
         for i, time in enumerate(dota_timer.timer_time_left):
-
             self.timers[i]['text'] = time
 
-        dota_timer.root.after(100, self.update_timer)
+        self.master.after(100, self.update_timer)
 
     def __init__(self, master=None):
         Tk.Frame.__init__(self, master)
