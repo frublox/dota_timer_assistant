@@ -406,8 +406,8 @@ def run():
     timer_watcher = Thread(target=watch_timers, name="Timer Watcher")
     timer_watcher.start()
 
-    screen_updater = Thread(target=update_screen, name="Screen Updater")
-    screen_updater.start()
+    # screen_updater = Thread(target=update_screen, name="Screen Updater")
+    # screen_updater.start()
 
     overlay_runner = Thread(target=run_overlay, name="Overlay Runner")
     overlay_runner.start()
