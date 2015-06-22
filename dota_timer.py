@@ -431,11 +431,12 @@ def set_heroes(names, ids):
 
 def main():
     load_configs()
-    set_heroes(*read_hero_names_and_ids())
+    names_and_ids = read_hero_names_and_ids()
+    set_heroes(*names_and_ids)
     run()
 
 
 if __name__ == '__main__':
-    test.run()
-    # main()
+    # test.run()
+    main()
 
