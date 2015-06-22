@@ -4,6 +4,7 @@ import Tkinter as Tk
 
 import dota_timer
 
+
 class Overlay(Tk.Frame):
     def __init__(self):
         self.root = Tk.Tk()
